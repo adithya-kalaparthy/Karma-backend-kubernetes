@@ -184,3 +184,44 @@ func DeleteTask(c *gin.Context) {
 		"deleted list": result,
 	})
 }
+
+func CreateMultipleTasks(c *gin.Context) {
+	body := c.Request.Body
+
+	mongoSession, err := c.Get("mongoSession")
+	if !err || mongoSession == nil {
+		log.Fatalf("Middleware did not provide mongoSession")
+		return
+	}
+
+	dbSession, ok := mongoSession.(mongo.Session)
+
+	if !ok {
+		log.Fatalf("MongoDB session is not valid")
+		return
+	}
+
+	// Close the body after create task is correctly run.
+	defer body.Close()
+
+	var jsonData []interface{}
+	errConvertingJson := json.NewDecoder(body).Decode(&jsonData)
+
+	if errConvertingJson != nil {
+		log.Fatalf("error decoding json %v", errConvertingJson)
+		body.Close()
+		return
+	}
+
+	collection := dbSession.Client().Database(os.Getenv("MONGODB_DATABASE")).Collection("karma")
+
+	result, errInsertingDoc := collection.InsertMany(context.TODO(), jsonData)
+
+	if errInsertingDoc != nil {
+		panic(errInsertingDoc)
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"Insert result": result,
+	})
+}

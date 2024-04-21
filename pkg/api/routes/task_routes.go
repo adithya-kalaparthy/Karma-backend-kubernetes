@@ -12,6 +12,7 @@ func SetupTaskRoutes(router *gin.RouterGroup) {
 		taskGroup.POST("/create_task", handlers.CreateTask)
 		taskGroup.PATCH("/update_task", handlers.UpdateTask)
 		taskGroup.DELETE("/delete_task", handlers.DeleteTask)
+		taskGroup.POST("/create_many", handlers.CreateMultipleTasks)
 		// Add other user-related routes as needed
 	}
 }

@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: karma-api-k8s-deployment
+  labels:
+    app: karma-api-k8s
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: karma-api-k8s
+  template:
+    metadata:
+      labels:
+        # Label of the mongodb pod. Useful for identification of pod.
+        app: karma-api-k8s
+    spec:
+      containers:
+      - name: karma-api-k8s
+        image: 199412208952/karma-api-k8s:latest
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            memory: 512Mi
+            cpu: "1"
+        env:
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: karmadb-secret
+              key: DB_USER
+        - name: DB_PASS
+          valueFrom:
+            secretKeyRef:
+              name: karmadb-secret
+              key: DB_PASS
+        - name: MONGODB_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: karmadb-secret
+              key: MONGODB_DATABASE
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: DB_HOST
+              name: karmadb-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: karma-api-k8s-service
+  labels:
+    app: karma-api-k8s-service
+spec:
+  type: NodePort
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
+    nodePort: 30100
+  selector:
+    app: karma-api-k8s
