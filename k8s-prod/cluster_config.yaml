@@ -1,0 +1,35 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: karma-cluster
+  region: eu-north-1
+
+# Service account section.
+iam:
+  withOIDC: true
+  serviceAccounts:
+  - metadata:
+      name: karma-ng-sa
+      namespace: kube-system
+    attachPolicyARNs:
+    - arn:aws:iam::905418489885:policy/AWSEksClusterGroupPolicy
+
+# Create node group with instance type, repicas, auto scaling etc.
+managedNodeGroups:
+- name: karma-ng
+  instanceType: t3.micro
+  minSize: 1
+  maxSize: 6
+  desiredCapacity: 5
+  iam:
+    withAddonPolicies:
+      autoScaler: true
+      externalDNS: true
+      cloudWatch: true
+
+cloudWatch:
+  clusterLogging:
+    # enable specific types of cluster control plane logs
+    enableTypes: [ "audit", "authenticator", "controllerManager" ]
+

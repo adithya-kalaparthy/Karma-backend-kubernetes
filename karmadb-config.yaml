@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: karmadb-config
+data:
+  DB_HOST: karmadb-service
+  DB_PORT: "27017"
+  ENV: "local"
+  MONGO_CLUSTER_NAME: "karma"
+

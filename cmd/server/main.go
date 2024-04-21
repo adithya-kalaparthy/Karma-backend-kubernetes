@@ -15,11 +15,20 @@ func main() {
 	// Load env variables.
 	err := config.LoadEnv()
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Fatalf("%s", err.Error())
 		return
 	}
 
 	router := gin.Default()
+
+	// Add a handler for the root path
+	router.GET("/", func(c *gin.Context) {
+		log.Print("Empty endpoint request recieved.")
+		c.JSON(200, gin.H{
+			"message": "Welcome to the Karma API",
+			"status":  "running",
+		})
+	})
 
 	// Apply MongoDB middleware to all routes in taskApiGroup
 	router.Use(middlewares.MongoDBMiddleware())
