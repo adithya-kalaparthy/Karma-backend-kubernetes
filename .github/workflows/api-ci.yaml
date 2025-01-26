@@ -3,15 +3,10 @@ name: Docker Image CI
 on:
   push:
     branches:
-    - main
-  pull_request:
-    branches:
-    - main
+      - main # This will upon pushing to main branch.
 
 jobs:
-
   build-and-deploy:
-
     runs-on: ubuntu-latest
 
     steps:
