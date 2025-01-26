@@ -15,11 +15,13 @@ import (
 )
 
 const (
-	mongoDBHostEnvKey     = "DB_HOST"
-	mongoDBPortEnvKey     = "DB_PORT"
-	mongoDBUsernameEnvKey = "DB_USER"
-	mongoDBPasswordEnvKey = "DB_PASS"
-	mongoDBDatabaseEnvKey = "MONGODB_DATABASE"
+	mongoDBHostEnvKey      = "DB_HOST"
+	mongoDBPortEnvKey      = "DB_PORT"
+	mongoDBUsernameEnvKey  = "DB_USER"
+	mongoDBPasswordEnvKey  = "DB_PASS"
+	mongoDBDatabaseEnvKey  = "MONGODB_DATABASE"
+	envKey                 = "ENV"
+	mongoClusterNameEnvKey = "MONGO_CLUSTER_NAME"
 )
 
 // MongoDBMiddleware connects to MongoDB and provides a database session in the Gin API request context.
@@ -30,7 +32,9 @@ func MongoDBMiddleware() gin.HandlerFunc {
 		mongoDBPort := os.Getenv(mongoDBPortEnvKey)
 		mongoDBUsername := os.Getenv(mongoDBUsernameEnvKey)
 		mongoDBPassword := os.Getenv(mongoDBPasswordEnvKey)
-		mongoDBDatabase := os.Getenv(mongoDBDatabaseEnvKey)
+		env := os.Getenv(envKey)
+		mongoClusterName := os.Getenv(mongoClusterNameEnvKey)
+		serverApi := options.ServerAPI(options.ServerAPIVersion1)
 
 		// Construct MongoDB connection URI
 		mongoDBURI := "mongodb://" +
@@ -38,14 +42,25 @@ func MongoDBMiddleware() gin.HandlerFunc {
 			":" +
 			url.QueryEscape(mongoDBPassword) +
 			"@" +
-			mongoDBHost +
-			":" +
-			mongoDBPort +
-			"/?authSource=" +
-			mongoDBDatabase 
+			url.QueryEscape(mongoDBHost)
+
+		if env == "local" {
+			mongoDBURI += ":" + mongoDBPort + "/"
+		} else if env == "prod" {
+			mongoDBURI = "mongodb+srv://" + url.QueryEscape(mongoDBUsername) +
+				":" +
+				url.QueryEscape(mongoDBPassword) +
+				"@" +
+				url.QueryEscape(mongoDBHost) +
+				"/?retryWrites=true&w=majority&appName=" +
+				mongoClusterName
+		}
+
+		log.Printf("ENV recieved as %s", env)
+		log.Printf("DB connection string %s", mongoDBURI)
 
 		// Set up MongoDB client options
-		clientOptions := options.Client().ApplyURI(mongoDBURI)
+		clientOptions := options.Client().ApplyURI(mongoDBURI).SetServerAPIOptions(serverApi)
 		clientOptions.SetReadPreference(readpref.Primary())    // Set read preference
 		clientOptions.SetWriteConcern(writeconcern.Majority()) // Set write concern
 		clientOptions.SetMaxConnIdleTime(10 * time.Second)     // Set max conn idle time

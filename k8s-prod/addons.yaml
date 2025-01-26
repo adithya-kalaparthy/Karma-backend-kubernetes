@@ -1,0 +1,26 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: karma-cluster
+  region: eu-north-1
+
+# Create addons so that vpc connection and pod identity can
+# work.
+addons:
+- name: eks-pod-identity-agent
+  version: latest
+  resolveConflicts: overwrite
+- name: vpc-cni
+  version: latest
+  resolveConflicts: overwrite
+  podIdentityAssociations:
+  - namespace: kube-system
+    serviceAccountName: aws-node
+    roleARN: arn:aws:iam::905418489885:role/AWSEksVpcCniRole
+- name: kube-proxy
+  version: latest
+  resolveConflicts: overwrite
+- name: coredns
+  version: latest
+  resolveConflicts: overwrite
